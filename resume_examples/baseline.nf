@@ -17,7 +17,8 @@ Channel
   .set { inputfiles }
   
 process one {
-  publishDir params.dstDir  
+  tag { input }
+  publishDir params.dstDir, mode: 'copy'
     
   input:
   file input from inputfiles
@@ -26,51 +27,51 @@ process one {
   file "${input.getBaseName()}_one.txt" into onefiles     
 
   when:
-  !file("${input.getBaseName()}_one.txt").exists()
+  !file("${params.dstDir}/${input.getBaseName()}_one.txt").exists()
     
   script:
-  log.info "process one file $input"
   """
-  cp $input "${input.getBaseName()}_one.txt"
+  cp $input ${input.getBaseName()}_one.txt
   """
 }
 
 process two {
-  publishDir params.dstDir  
+  tag { input }
+  publishDir params.dstDir, mode: 'copy'
 
   input:
   file input from onefiles
   
   output:
-  file into twofiles
+  file "${twoInput}_two.txt" into twofiles
   
   when:
-  !file("${twoInput}_two.txt").exists()
+  !file("${params.dstDir}/${twoInput}_two.txt").exists()
 
   script:    
-  twoInput = input.split("_")[0]
-  log.info "process two file $input"
+  twoInput = "$input".split("_")[0]
   """
-  cp $twoInput "${twoInput}_two.txt"
+  cp $input ${twoInput}_two.txt
   """
 }
 
 process three {
-  publishDir params.dstDir  
+  tag { input }
+  publishDir params.dstDir, mode: 'copy'
 
   input:
   file input from twofiles
-  
-  output:
-  file into threefiles
-  
-  when:
-  !file("${threeInput}_three.txt").exists()
 
-  scripts:
-  threeInput = input.split("_")[0]
-  log.info "process three file $input"
+  output:
+  file "${threeInput}_three.txt" into threefiles
+
+  when:
+  !file("${params.dstDir}/${threeInput}_three.txt").exists()
+
+  script:
+  threeInput = "$input".split("_")[0]
   """
-  cp $threeInput "${threeInput}_three.txt"
-  """  
+  cp $input ${threeInput}_three.txt
+  """
 }
+
